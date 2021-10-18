@@ -5,15 +5,10 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 
 var todosRouter = require("./routes/todo");
-
+const databaseHelper = require("./helpers/database");
 var app = express();
-const mongoose = require("mongoose");
-const dbConfig = require("./config/db.config");
 
-mongoose.connect(dbConfig.url, dbConfig.options);
-const db = mongoose.connection;
-
-db.on("error", console.error.bind(console, "connection error:"));
+databaseHelper.connect();
 
 app.use(logger("dev"));
 app.use(express.json());
