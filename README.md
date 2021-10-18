@@ -20,6 +20,18 @@
 3. Aplikacja powinna działać na porcie 6868 a baza danych 7017
 4. Aby ponownie zbudować aplikacje uruchamiamy **docker-compose down** i **docker-compose build**
 
+## Struktura folderów (krótki opis)
+
+1. bin - pliki konfiguracyjne wygenerowane przez express generator
+2. config - pliki konfiguracyjne (w naszym przypadku plik konfiguracyjny do bazy danych)
+3. controllers - logika endpointów (w naszym przypadku naszej todo listy)
+4. helpers - różne funkcje wspomagające (w naszym przypadku funkcje wspomagające testy)
+5. lib - funckje/klasy typowo biblioteczne (w naszym przypadku MemoryDBServer - obiekt z funkcjami biblioteki mongodb-memory-server)
+6. models - modele bazy danych mongodb (u nas Todo)
+7. routes - obsługa endpointów
+8. testConfig - konfiguracja testów
+9. node_modules - zbiór bibliotek
+
 ## Przydatne linki
 
 1. Z tego korzystałem do startu projektu (no prawie bo zacząłem od express-generatora https://expressjs.com/en/starter/generator.html) - https://www.bezkoder.com/docker-compose-nodejs-mongodb/
