@@ -23,3 +23,5 @@
 ## Przydatne linki
 
 1. Z tego korzystałem do startu projektu (no prawie bo zacząłem od express-generatora https://expressjs.com/en/starter/generator.html) - https://www.bezkoder.com/docker-compose-nodejs-mongodb/
+2. Konfiguracja testów integracyjnych/end-to-end - https://dev.to/dyarleniber/parallel-tests-in-node-js-with-jest-and-mongodb-without-mocking-4jj2
+3. Konfiguracja testów integracyjnych/end-to-end (dodatkowe, bardziej to 1) - https://dev.to/nedsoft/testing-nodejs-express-api-with-jest-and-supertest-1km6
