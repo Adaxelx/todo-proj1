@@ -1,2 +1,3 @@
 node_modules
+coverage
 # .env to powinno być w git ignore ale zostawmy na potrzebę tego projektu tak zeby nie trzeba było tego dodawać
