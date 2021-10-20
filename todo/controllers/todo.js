@@ -18,6 +18,22 @@ const Todo = () => {
           `Pole ${field} jest ograniczone do ${max} znaków. Skróć wiadomość!`
         ),
     },
+
+    getTask: {
+      success: genErrorObject("Pobrano listę zadań!"),
+    },
+
+    deleteTask: {
+      success: genErrorObject("Usunięto obiekt"),
+      notExists: genErrorObject("Obiekt nie istnieje!")
+    },
+
+    updateTask: {
+      success: genErrorObject("Zaktualizowano obiekt!"),
+      notExists: genErrorObject("Obiekt o podanym ID nie istnieje!"),
+      invalidId: genErrorObject("ID ma nieprawidłowy format!")
+    }
+
   };
 
   // POST request in routes/todo
@@ -46,7 +62,71 @@ const Todo = () => {
     }
   };
 
-  return { sendTask, messages };
+  const getTasks = async (req, res, next) => {
+
+    try {
+
+      const response = await TodoModel.find({});
+      res.status(200);
+      res.json({ ...messages.getTask.success, data: response });
+    } catch (err) {
+      res.status(500);
+      res.json({ message: err.message || "Nieznany błąd." });
+    }
+  }
+
+  const deleteTask = async (req, res, next) => {
+    const { id } = req.params;
+    try {
+      const response = await TodoModel.deleteOne({ _id: id });
+      if (response.deletedCount === 0) {
+        res.status(404);
+        res.json(messages.deleteTask.notExists);
+        return;
+      }
+      res.json(messages.deleteTask.success);
+
+    } catch (err) {
+      if (err.kind === "ObjectId") {
+        res.status(404)
+        res.json(messages.updateTask.invalidId);
+      }
+      else {
+        res.status(500);
+        res.json({ message: err.message || "Nieznany błąd." });
+      }
+    }
+
+  }
+
+  const updateTask = async (req, res, next) => {
+    const { id } = req.params;
+    try {
+      const response = await TodoModel.findOne({ _id: id });
+
+      if (!response) {
+        res.status(404);
+        res.json(messages.updateTask.notExists);
+        return
+      }
+      const { isDone } = response;
+
+      const responseUpdate = await TodoModel.updateOne({ _id: id }, { isDone: !isDone });
+      res.json(messages.updateTask.success);
+    }
+    catch (err) {
+      if (err.kind === "ObjectId") {
+        res.status(404)
+        res.json(messages.updateTask.invalidId);
+      }
+      else {
+        res.status(500);
+        res.json({ message: err.message || "Nieznany błąd." });
+      }
+    }
+  }
+
+  return { sendTask, messages, getTasks, deleteTask, updateTask };
 };
 
 module.exports = Todo();
