@@ -6,7 +6,7 @@ const TodoModel = require("../models/Todo");
 const { messages } = require("../controllers/todo");
 const request = supertest(app);
 const { build, fake } = require("@jackfranklin/test-data-bot");
-const { disconnect } = require("../helpers/database");
+const { disconnect, connect } = require("../helpers/database");
 const toDo = build("Todo", {
   fields: {
     description: fake((f) => f.lorem.sentence()),
@@ -17,6 +17,18 @@ const createTask = async (task) => {
   const response = await request.post("/todo").send(task);
   expect(response.body).toEqual(messages.sendTask.success);
   expect(response.status).toBe(201);
+};
+
+const updateTask = async (task) => {
+  await request.post("/todo").send(task);
+  const beforeGetResponse = await request.get("/todo");
+  const taskId = beforeGetResponse.body.data[0]._id;
+  const response = await request.patch("/todo/" + taskId);
+  const afterGetResponse = await request.get("/todo");
+
+  return {beforeTask: beforeGetResponse.body.data[0],
+          afterTask: afterGetResponse.body.data[0],
+          patchResponse: response}
 };
 
 const exacly100Letters =
@@ -76,5 +88,64 @@ describe("Todo", () => {
       expect(response.body).toEqual(messages.sendTask.required("description"));
       expect(response.status).toBe(400);
     });
+  });
+
+  describe("PATCH - update task", () => {
+
+    beforeAll(async () => {
+      await connect();
+    });
+
+    it("should update task", async () => {
+      const { beforeTask, afterTask, patchResponse } = await updateTask(toDo());
+      const isDoneBefore = beforeTask.isDone;
+      const isDoneAfter = afterTask.isDone;
+
+      expect(isDoneAfter).toEqual(!isDoneBefore);
+      expect(patchResponse.body).toEqual(messages.updateTask.success);
+      expect(patchResponse.status).toBe(200);
+    });
+
+    it("should not change not changeable params", async () => {
+      const { beforeTask, afterTask } = await updateTask(toDo());
+      const descriptionBefore = beforeTask.description;
+      const descriptionAfter = afterTask.description;
+
+      expect(descriptionAfter).toEqual(descriptionBefore);
+    });
+
+    it("should return error message if task don't exist", async () => {
+      const id = "000000000000000000000000";
+      const response = await request.patch("/todo/" + id);
+
+      expect(response.body).toEqual(messages.updateTask.notExists);
+      expect(response.status).toBe(404);
+    });
+
+    it("should return error message if id is not 24 letter string", async () => {
+      const invalidId = "a1";
+      const response = await request.patch("/todo/" + invalidId);
+
+      expect(response.body).toEqual(messages.updateTask.invalidId);
+      expect(response.status).toBe(404);
+    });
+
+    it("should return empty object if id is not given", async () => {
+      const response = await request.patch("/todo");
+
+      expect(response.body).toEqual({});
+      expect(response.status).toBe(404);
+    });
+
+    it("should handle unexpected error (for example not connected db)", async () => {
+      await disconnect();
+      const response = await request.post("/todo").send(toDo());
+
+      expect(response.body.message).toMatchInlineSnapshot(
+          `"MongoClient must be connected to perform this operation"`
+      );
+      expect(response.status).toBe(500);
+    });
+
   });
 });
