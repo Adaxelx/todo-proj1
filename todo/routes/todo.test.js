@@ -109,7 +109,6 @@ describe("Todo", () => {
   });
 
   describe("PATCH - update task", () => {
-
     beforeAll(async () => {
       await connect();
     });
@@ -149,15 +148,19 @@ describe("Todo", () => {
     });
 
     it("should return empty object if id is not given", async () => {
-      const response = await request.patch("/todo");
+      const response = await request.patch("/todo/");
 
       expect(response.body).toEqual({});
       expect(response.status).toBe(404);
     });
 
     it("should handle unexpected error (for example not connected db)", async () => {
+      await request.post("/todo").send(toDo());
+      const getResponse = await request.get("/todo");
+      const taskId = getResponse.body.data[0]._id;
+
       await disconnect();
-      const response = await request.post("/todo").send(toDo());
+      const response = await request.patch("/todo/" + taskId);
 
       expect(response.body.message).toMatchInlineSnapshot(
           `"MongoClient must be connected to perform this operation"`
@@ -184,7 +187,7 @@ describe("Todo", () => {
 
     it("should handle unexpected error (for example not connected db)", async () => {
       await disconnect();
-      const response = await request.get("/todo").send(toDo());
+      const response = await request.get("/todo");
 
       expect(response.body.message).toMatchInlineSnapshot(
           `"MongoClient must be connected to perform this operation"`
