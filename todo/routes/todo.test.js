@@ -31,6 +31,19 @@ const updateTask = async (task) => {
           patchResponse: response}
 };
 
+const deleteTask = async (task) => {
+  await request.post("/todo").send(task);
+  const beforeGetResponse = await request.get("/todo");
+  const taskId = beforeGetResponse.body.data[0]._id;
+  const response = await request.delete("/todo/" + taskId);
+  const afterGetResponse = await request.get("/todo");
+
+  return {beforeTask: beforeGetResponse.body.data[0],
+          afterTask: afterGetResponse.body.data[0],
+          deleteResponse: response,
+          taskId: taskId}
+};
+
 const getTask = async (task) => {
   const response = await request.get("/todo");
   expect(response.body.message).toEqual(messages.getTask.success.message);
@@ -172,6 +185,52 @@ describe("Todo", () => {
     it("should handle unexpected error (for example not connected db)", async () => {
       await disconnect();
       const response = await request.get("/todo").send(toDo());
+
+      expect(response.body.message).toMatchInlineSnapshot(
+          `"MongoClient must be connected to perform this operation"`
+      );
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('DELETE - get tasks', () => {
+    beforeAll(async () => {
+      await connect();
+    });
+
+    it("should delete task", async () => {
+      const { beforeTask, afterTask, deleteResponse } = await deleteTask(toDo());
+
+      expect(deleteResponse.body).toEqual(messages.deleteTask.success);
+      expect(deleteResponse.status).toBe(200);
+    });
+
+    it("should return error message if id is uncorrect", async () => {
+      await request.post("/todo").send(toDo());
+      const beforeGetResponse = await request.get("/todo");
+      const id = "00000000000"
+      const response = await request.delete("/todo/" + id);
+
+      expect(response.body).toEqual(messages.updateTask.invalidId);
+      expect(response.status).toBe(404);
+    });
+
+    it("should return error message if object was delete earlier", async () => {
+      const { beforeTask, afterTask, deleteResponse, taskId } = await deleteTask(toDo());
+      const response = await request.delete("/todo/" + taskId);
+
+      expect(response.body).toEqual(messages.deleteTask.notExists);
+      expect(response.status).toBe(404);
+    });
+
+    it("should handle unexpected error (for example not connected db)", async () => {
+
+      await request.post("/todo").send(toDo());
+      const beforeGetResponse = await request.get("/todo");
+      const taskId = beforeGetResponse.body.data[0]._id;
+
+      await disconnect();
+      const response = await request.delete("/todo/" + taskId);
 
       expect(response.body.message).toMatchInlineSnapshot(
           `"MongoClient must be connected to perform this operation"`
