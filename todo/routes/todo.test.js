@@ -31,6 +31,11 @@ const updateTask = async (task) => {
           patchResponse: response}
 };
 
+const getTask = async (task) => {
+  const response = await request.get("/todo");
+  expect(response.body.message).toEqual(messages.getTask.success.message);
+};
+
 const exacly100Letters =
   "A9nYQTzzWzOhszNmohNkyFycbarWVzLwiVB5mWcaDVBg1WSSu4mpQJj5qhKnAN5XUq07YZ6bO4c97SmJTI0oNaXhvUuTXxyTU61H";
 
@@ -146,6 +151,32 @@ describe("Todo", () => {
       );
       expect(response.status).toBe(500);
     });
+  });
 
+  describe('GET - get tasks', () => {
+    beforeAll(async () => {
+      await connect();
+    });
+
+    it("should get tasks", async () => {
+      await getTask(toDo());
+    });
+
+    it("should get current list", async () => {
+      const beforeGetResponse = await request.get("/todo");
+      await createTask(toDo());
+      const afterGetResponse = await request.get("/todo");
+      expect(Object.keys(beforeGetResponse.body.data).length + 1).toEqual(Object.keys(afterGetResponse.body.data).length);
+    });
+
+    it("should handle unexpected error (for example not connected db)", async () => {
+      await disconnect();
+      const response = await request.get("/todo").send(toDo());
+
+      expect(response.body.message).toMatchInlineSnapshot(
+          `"MongoClient must be connected to perform this operation"`
+      );
+      expect(response.status).toBe(500);
+    });
   });
 });
