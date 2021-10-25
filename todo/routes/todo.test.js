@@ -23,12 +23,14 @@ const updateTask = async (task) => {
   await request.post("/todo").send(task);
   const beforeGetResponse = await request.get("/todo");
   const taskId = beforeGetResponse.body.data[0]._id;
-  const response = await request.patch("/todo/" + taskId);
+  const response = await request.patch("/todo/" + taskId + "/toggle");
   const afterGetResponse = await request.get("/todo");
 
-  return {beforeTask: beforeGetResponse.body.data[0],
-          afterTask: afterGetResponse.body.data[0],
-          patchResponse: response}
+  return {
+    beforeTask: beforeGetResponse.body.data[0],
+    afterTask: afterGetResponse.body.data[0],
+    patchResponse: response,
+  };
 };
 
 const deleteTask = async (task) => {
@@ -38,10 +40,12 @@ const deleteTask = async (task) => {
   const response = await request.delete("/todo/" + taskId);
   const afterGetResponse = await request.get("/todo");
 
-  return {beforeTask: beforeGetResponse.body.data[0],
-          afterTask: afterGetResponse.body.data[0],
-          deleteResponse: response,
-          taskId: taskId}
+  return {
+    beforeTask: beforeGetResponse.body.data[0],
+    afterTask: afterGetResponse.body.data[0],
+    deleteResponse: response,
+    taskId: taskId,
+  };
 };
 
 const getTask = async (task) => {
@@ -133,7 +137,7 @@ describe("Todo", () => {
 
     it("should return error message if task don't exist", async () => {
       const id = "000000000000000000000000";
-      const response = await request.patch("/todo/" + id);
+      const response = await request.patch("/todo/" + id + "/toggle");
 
       expect(response.body).toEqual(messages.updateTask.notExists);
       expect(response.status).toBe(404);
@@ -141,7 +145,7 @@ describe("Todo", () => {
 
     it("should return error message if id is not 24 characters string", async () => {
       const invalidId = "a1";
-      const response = await request.patch("/todo/" + invalidId);
+      const response = await request.patch("/todo/" + invalidId + "/toggle");
 
       expect(response.body).toEqual(messages.updateTask.invalidId);
       expect(response.status).toBe(404);
@@ -153,16 +157,16 @@ describe("Todo", () => {
       const taskId = getResponse.body.data[0]._id;
 
       await disconnect();
-      const response = await request.patch("/todo/" + taskId);
+      const response = await request.patch("/todo/" + taskId + "/toggle");
 
       expect(response.body.message).toMatchInlineSnapshot(
-          `"MongoClient must be connected to perform this operation"`
+        `"MongoClient must be connected to perform this operation"`
       );
       expect(response.status).toBe(500);
     });
   });
 
-  describe('GET - get tasks', () => {
+  describe("GET - get tasks", () => {
     beforeAll(async () => {
       await connect();
     });
@@ -175,7 +179,9 @@ describe("Todo", () => {
       const beforeGetResponse = await request.get("/todo");
       await createTask(toDo());
       const afterGetResponse = await request.get("/todo");
-      expect(Object.keys(beforeGetResponse.body.data).length + 1).toEqual(Object.keys(afterGetResponse.body.data).length);
+      expect(Object.keys(beforeGetResponse.body.data).length + 1).toEqual(
+        Object.keys(afterGetResponse.body.data).length
+      );
     });
 
     it("should handle unexpected error (for example not connected db)", async () => {
@@ -183,19 +189,21 @@ describe("Todo", () => {
       const response = await request.get("/todo");
 
       expect(response.body.message).toMatchInlineSnapshot(
-          `"MongoClient must be connected to perform this operation"`
+        `"MongoClient must be connected to perform this operation"`
       );
       expect(response.status).toBe(500);
     });
   });
 
-  describe('DELETE - get tasks', () => {
+  describe("DELETE - get tasks", () => {
     beforeAll(async () => {
       await connect();
     });
 
     it("should delete task", async () => {
-      const { beforeTask, afterTask, deleteResponse } = await deleteTask(toDo());
+      const { beforeTask, afterTask, deleteResponse } = await deleteTask(
+        toDo()
+      );
 
       expect(deleteResponse.body).toEqual(messages.deleteTask.success);
       expect(deleteResponse.status).toBe(200);
@@ -204,7 +212,7 @@ describe("Todo", () => {
     it("should return error message if id is uncorrect", async () => {
       await request.post("/todo").send(toDo());
       const beforeGetResponse = await request.get("/todo");
-      const id = "00000000000"
+      const id = "00000000000";
       const response = await request.delete("/todo/" + id);
 
       expect(response.body).toEqual(messages.updateTask.invalidId);
@@ -212,7 +220,8 @@ describe("Todo", () => {
     });
 
     it("should return error message if object was delete earlier", async () => {
-      const { beforeTask, afterTask, deleteResponse, taskId } = await deleteTask(toDo());
+      const { beforeTask, afterTask, deleteResponse, taskId } =
+        await deleteTask(toDo());
       const response = await request.delete("/todo/" + taskId);
 
       expect(response.body).toEqual(messages.deleteTask.notExists);
@@ -220,7 +229,6 @@ describe("Todo", () => {
     });
 
     it("should handle unexpected error (for example not connected db)", async () => {
-
       await request.post("/todo").send(toDo());
       const beforeGetResponse = await request.get("/todo");
       const taskId = beforeGetResponse.body.data[0]._id;
@@ -229,7 +237,7 @@ describe("Todo", () => {
       const response = await request.delete("/todo/" + taskId);
 
       expect(response.body.message).toMatchInlineSnapshot(
-          `"MongoClient must be connected to perform this operation"`
+        `"MongoClient must be connected to perform this operation"`
       );
       expect(response.status).toBe(500);
     });
