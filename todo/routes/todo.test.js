@@ -73,15 +73,6 @@ describe("Todo", () => {
       expect(response.status).toBe(400);
     });
 
-    it("should return error message if description is not unique", async () => {
-      const todoObject = toDo();
-      const response1 = await request.post("/todo").send(todoObject);
-      const response2 = await request.post("/todo").send(todoObject);
-
-      expect(response2.body).toEqual(messages.sendTask.notUnique);
-      expect(response2.status).toBe(409);
-    });
-
     it("should return error message if description is to long (more than 100 characters)", async () => {
       const todoObject = toDo({
         overrides: { description: fake((f) => f.lorem.sentence(120)) },
