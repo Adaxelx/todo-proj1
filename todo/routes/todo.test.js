@@ -139,18 +139,11 @@ describe("Todo", () => {
       expect(response.status).toBe(404);
     });
 
-    it("should return error message if id is not 24 letter string", async () => {
+    it("should return error message if id is not 24 characters string", async () => {
       const invalidId = "a1";
       const response = await request.patch("/todo/" + invalidId);
 
       expect(response.body).toEqual(messages.updateTask.invalidId);
-      expect(response.status).toBe(404);
-    });
-
-    it("should return empty object if id is not given", async () => {
-      const response = await request.patch("/todo/");
-
-      expect(response.body).toEqual({});
       expect(response.status).toBe(404);
     });
 
